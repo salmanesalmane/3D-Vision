@@ -47,6 +47,9 @@ def compute_fundamental_matrix(P1,P2,C1):
                         [-e2[1], e2[0], 0]])
     F       = e2_x @ P2 @ P1_pinv
 
-    if F.sum() == 0 :
-        F = 0.3*np.identity(3)
+    # -To deal with the case where the fundamental matrix is badly conditioned,
+    #  we add a small term to avoid problems in the calculations.
+
+    if np.abs(F).sum() == 0 :
+        F += (1e-2)*np.identity(3)
     return F

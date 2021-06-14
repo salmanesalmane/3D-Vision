@@ -6,6 +6,8 @@ from player_initialization import *
 from cross_view_tracking import *
 
 nb_keypoints = 26 
+
+
 #------------ Definitions of classes ------------
 
 class Detection:

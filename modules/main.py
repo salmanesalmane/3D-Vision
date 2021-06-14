@@ -7,7 +7,7 @@ calibration_path = '/content/drive/MyDrive/3D Vision/ULSAN vs DUHAIL/calibration
 
 import os
 from os.path import exists, join, basename, splitext
-from IPython.display import YouTubeVideo
+#from IPython.display import YouTubeVideo
 import torch, torchvision
 assert torch.__version__.startswith("1.8")
 import PIL
@@ -72,6 +72,11 @@ camera_locations_dict = {"CAM1":C1, "LEFT":C_l, "RIGHT":C_r}
 #------------PATHS----------
 
 def read_datasets(path):
+	'''
+	Function for importing the 2D coordinates of the keypoints of the players in the different frames.
+	- Input: -Path to the json file containing the 2D poses of the players.
+	- Output: List of objects of Class Detection, where each detected player is linked to a Detection.
+	'''
 	detections = []
 	data = []
 	for cam in cameras:
@@ -94,6 +99,13 @@ def read_datasets(path):
 	return detections
 
 def algorithm1(list_new_detec, list_prev_targets, list_prev_unmatched_detec):
+  '''
+- This function is regarding the implementation of Algorithm1 of the paper (Cross-View Tracking for Multi-Human 3D Pose Estimation at over 100 FPS)
+- Inputs : 	- list_new_detec            : List containing new detections (objects of the class Detection)
+			- list_prev_targets         : List containing previous targets (objects of the class Target)
+			- list_prev_unmatched_detec : List containing previous unmatched detections
+  '''
+
   list_new_targets = []
   M = len(list_new_detec)
   N = len(list_prev_targets)
@@ -146,7 +158,21 @@ def algorithm1(list_new_detec, list_prev_targets, list_prev_unmatched_detec):
 
 
 
+
+
+
 if __name__ == "__main__":
 	detections = read_datasets(DETECTIONS_PATH)
+
+	detections_frame0 = []
+	detections_frame1 = []
+	for detec in detections:
+		if detec.t == 0:
+			detections_frame0.append(detec)
+		elif detec.t == 1:
+			detections_frame1.append(detec)
+		elif detec.t >1:
+			break
+
 	l = []
-	algorithm1(detections[73:153],l,  detections[1:73])
+	new_targets, unmatched_detec = algorithm1(detections_frame1, l, detections_frame0)

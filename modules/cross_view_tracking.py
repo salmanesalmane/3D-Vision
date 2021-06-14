@@ -1,18 +1,22 @@
 #------------ Cross-view Tracking functions ------------
 
 def hungarian(A):
-  # Input : 
-  #         - A       : the NxM  affinity matrix between targets and detections
-  # Output: 
-  #         - row_ind and their corresponding col_ind
+  '''
+  Input : 
+          - A       : the NxM  affinity matrix between targets and detections
+  Output: 
+          - row_ind and their corresponding col_ind
+  '''
   row_ind, col_ind = linear_sum_assignment(A)
   return row_ind, col_ind
 
 
 def affinity_2D (detection, target):
-    #Inputs: 2 2D homogenized joints with corresponding frame numbers
-    #        x1 is the current detected joint, x2 is the previously detected joint from the same camera
-    #Outputs: 2D affinity measurement
+    '''
+    Inputs: 2 2D homogenized joints with corresponding frame numbers
+            x1 is the current detected joint, x2 is the previously detected joint from the same camera
+    Outputs: 2D affinity measurement
+    '''
     for i in reversed(target.prev_detec):
         if i.cam==detection.cam:
             prev_detection = i 
@@ -27,10 +31,12 @@ def affinity_2D (detection, target):
     return A_2D
 
 def affinity_3D (detection, target):
-    #Inputs: X2 is the 3D homogenized joint location from the previous reconstruction
-    #        x1 is the 2D homogenized joint detection
-    #        P is the projection matrix of the current detection and C the camera loaction
-    #Outputs: 3D affinity measurement
+    '''
+    Inputs: X2 is the 3D homogenized joint location from the previous reconstruction
+            x1 is the 2D homogenized joint detection
+            P is the projection matrix of the current detection and C the camera loaction
+    Outputs: 3D affinity measurement
+    '''
     time_delta = abs(detection.t-target.t)*delta_t
 
     #back-project the detected joint into 3-space as a parametrized line
@@ -52,9 +58,11 @@ def affinity_3D (detection, target):
 
 
 def affinity_matrix(detections, targets):
-    #Inputs: detections is a list with all the current detections in this frame
-    #detections = [detection1, detection2, ....]
-    #targets = [target1, target2,...]
+    '''
+    Inputs: detections is a list with all the current detections in this frame
+    detections = [detection1, detection2, ....]
+    targets = [target1, target2,...]
+    '''
 
     m = len(detections)
     n = len(targets)

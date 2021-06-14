@@ -6,10 +6,10 @@ from cross_view_tracking import *
 from target_detection_classes import *
 cameras = ["CAM1", "RIGHT", "LEFT"]
 #-------- Parameters --------
-alpha_2D     = 6e-6 #60.0
-lambda_a     = 2.0 ##############
-w_2D         = 0.4 ###############
-alpha_3D     = 1e-5 #############
+alpha_2D     = 6e-6 
+lambda_a     = 2.0 
+w_2D         = 0.4 
+alpha_3D     = 1e-5 
 w_3D         = 0.6
 fps          = 25.0
 delta_t      = 1.0/fps
@@ -43,6 +43,7 @@ F2 = compute_fundamental_matrix(P_r,P1,C_r)
 projection_matrices_dict = {"CAM1":P1, "LEFT":P_l, "RIGHT":P_r}
 #list of 12 camera locations vectors, one for each camera
 camera_locations_dict = {"CAM1":C1, "LEFT":C_l, "RIGHT":C_r}
+
 
 #------------ Player Initialization ------------
 
@@ -86,53 +87,6 @@ def initialisation_affinity_matrix(unmatched_detections):
                 A[i,j] = epipolar_affinity(Di,Dj,F)
     return A
 
-'''
-def target_initialization(A, unmatched_detections):
-  n = len(A)
-  prob = LpProblem("Matching_detections", LpMaximize)
-  y = LpVariable.dicts("pair", [(i,j) for i in range(n) for j in range(n)] ,cat='Binary')
-
-  #add function to maximize
-  prob += lpSum([A[i,j] * y[(i,j)] for i in range(n) for j in range(n)])
-
-  list_of_detec_by_camera = []
-
-  for cam_nbr in range(len(cameras)):
-  	list_of_detec_by_camera.append([])
-
-  for cam in cameras:
-  	list_of_detec_by_camera.append([])
-  	for detec in len(unmatched_detections):
-  		if unmatched_detections[detec].cam == cam:
-  			list_of_detec_by_camera[-1].append(detec)
-
-
-  #add constraints
-  for i in range(n):
-    for j in range(n):
-      prob += y[(i,j)] == y[(j,i)]
-
-  for i in list_of_detec_by_camera[0]:
-    for j in list_of_detec_by_camera[1]:
-      if j == i:
-        continue
-      else:
-        for k in list_of_detec_by_camera[2]:
-          if k == i or k == j:
-            continue
-          else:  
-            prob += y[(i,j)]+y[(j,k)]-y[(i,k)]  <= 1
-            prob += y[(i,k)]+y[(k,j)]-y[(i,j)]  <= 1
-            prob += y[(j,i)]+y[(i,k)]-y[(j,k)]  <= 1
-
-  prob.solve()
-
-  B = np.zeros((n,n))
-  for i in range(n):
-      for j in range(n):
-          B[i,j] = y[(i,j)].varValue
-  return B
-'''
 def target_initialization(A, detections):
   cam_set_end = []
   camera_locations = []
@@ -181,28 +135,35 @@ def target_initialization(A, detections):
           B[i,j] = y[(i,j)].varValue
   return B
 
-def GraphPartition(B):
-	n = len(B)
-	total_list = []
-	for i in range(n):
-		if i in total_list:
-			continue
 
-		l = [i]
-		for j in range(n):
-			if j in total_list:
-				continue
-			if B[i, j] != 0:
-				l.append(j)
-				l = list(set(l))
-				non_zero_elem = [k for k, e in enumerate(B[j, :]) if e != 0]
-				for elem in non_zero_elem:
-					l.append(elem)
-					non_zero_elem_2 = [k for k, e in enumerate(B[elem, :]) if e != 0]
-					for elem2 in non_zero_elem_2:
-						l.append(elem2)
+
+def GraphPartition(B):
+  '''
+    - This functions takes a matrix containing binary elements (1,0) whre 1 at position (i,j) indicates
+      a match between detection i and j. It extracts the different partitions using the transitivity criteria 
+      that is to say (if A is matched with B, and B is matched with C, then A is matched with C, and the partition contains all of A,B and C)
+  '''
+  n = len(B)
+  total_list = []
+  for i in range(n):
+    if i in total_list:
+      continue
+
+    l = [i]
+    for j in range(n):
+      if j in total_list:
+        continue
+      if B[i, j] != 0:
+        l.append(j)
+        l = list(set(l))
+        non_zero_elem = [k for k, e in enumerate(B[j, :]) if e != 0]
+        for elem in non_zero_elem:
+          l.append(elem)
+          non_zero_elem_2 = [k for k, e in enumerate(B[elem, :]) if e != 0]
+          for elem2 in non_zero_elem_2:
+            l.append(elem2)
 					
-				l = list(set(l))
-		total_list += l
-		total_list = list(set(total_list))
-		yield l
+        l = list(set(l))
+    total_list += l
+    total_list = list(set(total_list))
+    yield l
